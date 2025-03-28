@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\Task;
+use Illuminate\Support\Facades\Http;
 
 class TaskManager extends Component
 {
@@ -45,15 +46,26 @@ class TaskManager extends Component
     public function suggestPriority()
     {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('OPENAI_API_KEY')
+            'Authorization' => 'Bearer ' . env('OPENAI_API_KEY'),
+            'Content-Type' => 'application/json',
         ])->post('https://api.openai.com/v1/completions', [
             'model' => 'text-davinci-003',
             'prompt' => "Based on this task description: '{$this->title} - {$this->description}', suggest a priority (low, medium, high).",
             'max_tokens' => 10
         ]);
 
-        $this->priority = strtolower(trim($response['choices'][0]['text']));
+        $data = $response->json(); // Convert response to array
+
+        // ✅ Check if 'choices' key exists before accessing it
+        if (isset($data['choices']) && count($data['choices']) > 0) {
+            $this->priority = strtolower(trim($data['choices'][0]['text']));
+        } else {
+            // Log error and set a default priority if response is invalid
+            \Log::error('OpenAI API response error', ['response' => $data]);
+            $this->priority = 'medium'; // Default priority
+        }
     }
+
 
     public function render()
     {
