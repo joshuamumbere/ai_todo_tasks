@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use App\Models\Task;
 
 class TaskManager extends Component
 {
@@ -12,6 +13,7 @@ class TaskManager extends Component
 
     public function mount()
     {
+        // $this->tasks = Task::all();
         $this->tasks = Task::orderBy('priority', 'desc')->get();
     }
 
